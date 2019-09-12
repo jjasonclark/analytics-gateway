@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data.OleDb;
 using System.Data;
 using System.Dynamic;
+using System.Configuration;
 
 namespace analytics_gateway.Controllers
 {
@@ -80,11 +81,11 @@ namespace analytics_gateway.Controllers
     [HttpGet]
     public ActionResult<IEnumerable<string>> Get()
     {
-      const string connectionString = ConfigurationManager.ConnectionString["main"].ConnectionString;
-      const string query = "EVALUATE Grants";
-      var result = ValuesController.ExecuteQuery(connectionString, query);
-      result.Wait();
-      return new string[] { result.Result.ToString() };
+            var connectionString = ConfigurationManager.ConnectionStrings["main"].ConnectionString;
+            const string query = "EVALUATE Grants";
+            var result = ValuesController.ExecuteQuery(connectionString, query);
+            result.Wait();
+            return new string[] { result.Result.ToString() };
     }
   }
 }
