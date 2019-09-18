@@ -13,7 +13,7 @@ namespace analytics_gateway.Controllers
     [HttpGet]
     public ActionResult<IEnumerable<string>> Get()
     {
-            var connectionString = ConfigurationManager.ConnectionStrings["main"].ConnectionString;
+            var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
             var query = "EVALUATE Grants";
             var result = Query.Sample(connectionString, query);
             result.Wait();
