@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using System.Configuration;
+using System.Web.Script.Serialization;
 
 namespace analytics_gateway.Controllers
 {
@@ -16,7 +17,9 @@ namespace analytics_gateway.Controllers
             var query = "EVALUATE Grants";
             var result = Query.Sample(connectionString, query);
             result.Wait();
-            return new string[] { result.Result.ToString() };
+            var finalResult = new List<string>();
+            result.Result.ForEach(row => finalResult.Add(new JavaScriptSerializer().Serialize(row)));
+            return finalResult;
+        }
     }
-  }
 }
