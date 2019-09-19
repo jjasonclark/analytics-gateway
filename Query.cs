@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Microsoft.AnalysisServices.AdomdClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.OleDb;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -11,22 +11,21 @@ namespace analytics_gateway
     {
         public static async Task<List<IDictionary<string, string>>> Sample(string connectionString, string commandString)
         {
-            OleDbConnection connection = null;
+            AdomdConnection connection = null;
             var rows = new List<IDictionary<string, string>>();
             try
             {
-                using (connection = new OleDbConnection(connectionString))
+                using (connection = new AdomdConnection(connectionString))
                 {
-                    await connection.OpenAsync();
+                    connection.Open();
 
-                    using (var command = new OleDbCommand(commandString, connection))
+                    using (var command = new AdomdCommand(commandString, connection))
                     {
-
-                        using (OleDbDataReader reader = command.ExecuteReader())
+                        using (var reader = command.ExecuteReader())
                         {
-                            IDataRecord record = (IDataRecord)reader;
-                            while (await reader.ReadAsync())
+                            while (reader.Read())
                             {
+                                IDataRecord record = (IDataRecord)reader;
                                 var dataObject = new Dictionary<string, string>();
                                 var resultRecord = new object[record.FieldCount];
                                 record.GetValues(resultRecord);
