@@ -9,10 +9,10 @@ namespace analytics_gateway
 {
     public class Query
     {
-        public static async Task<List<IDictionary<string, string>>> Sample(string connectionString, string commandString)
+        public static async Task<List<Dictionary<string, string>>> getRows(string connectionString, string commandString)
         {
             AdomdConnection connection = null;
-            var rows = new List<IDictionary<string, string>>();
+            var rows = new List<Dictionary<string, string>>();
             try
             {
                 using (connection = new AdomdConnection(connectionString))
@@ -21,39 +21,11 @@ namespace analytics_gateway
 
                     using (var command = new AdomdCommand(commandString, connection))
                     {
-                        using (var reader = command.ExecuteReader())
+                        using (AdomdDataReader reader = command.ExecuteReader())
                         {
                             while (reader.Read())
                             {
-                                IDataRecord record = (IDataRecord)reader;
-                                var dataObject = new Dictionary<string, string>();
-                                var resultRecord = new object[record.FieldCount];
-                                record.GetValues(resultRecord);
-
-                                for (int i = 0; i < record.FieldCount; i++)
-                                {
-                                    Type type = record.GetFieldType(i);
-                                    if (resultRecord[i] is System.DBNull)
-                                    {
-                                        resultRecord[i] = null;
-                                    }
-                                    else if (type == typeof(byte[]) || type == typeof(char[]))
-                                    {
-                                        resultRecord[i] = Convert.ToBase64String((byte[])resultRecord[i]);
-                                    }
-                                    else if (type == typeof(Guid) || type == typeof(DateTime))
-                                    {
-                                        resultRecord[i] = resultRecord[i].ToString();
-                                    }
-                                    else if (type == typeof(IDataReader))
-                                    {
-                                        resultRecord[i] = "<IDataReader>";
-                                    }
-
-                                    dataObject.Add(record.GetName(i), resultRecord[i].ToString());
-                                }
-
-                                rows.Add(dataObject);
+                                rows.Add(convertToDictionary(reader));
                             }
 
                             return rows;
@@ -65,10 +37,7 @@ namespace analytics_gateway
             {
                 Trace.TraceInformation("Error occured while fetching data");
                 Trace.TraceError(e.ToString());
-                rows.Add(new Dictionary<string, string>
-                {
-                    { "Error", e.Message }
-                });
+                rows.Add(new Dictionary<string, string> { { "Error", e.Message } });
                 return rows;
             }
             finally
@@ -77,5 +46,37 @@ namespace analytics_gateway
             }
         }
 
+        private static Dictionary<string, string> convertToDictionary(AdomdDataReader reader)
+        {
+            var dataObject = new Dictionary<string, string>();
+            var values = new object[reader.FieldCount];
+            reader.GetValues(values);
+
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                dataObject.Add(reader.GetName(i), stringify(reader, i));
+            }
+
+            return dataObject;
+        }
+
+        private static string stringify(AdomdDataReader row, int i)
+        {
+            if (row.IsDBNull(i))
+            {
+                return null;
+            }
+
+            var type = row.GetFieldType(i);
+            if (type == typeof(byte[]) || type == typeof(char[]))
+            {
+                return Convert.ToBase64String((byte[])row.GetValue(i));
+            }
+            else if (type == typeof(IDataReader))
+            {
+               return "<IDataReader>";
+            }
+            return row.GetValue(i).ToString();
+        }
     }
 }

@@ -15,7 +15,7 @@ namespace analytics_gateway.Controllers
         {
             var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
             var query = "EVALUATE Grants";
-            var queryTask = Query.Sample(connectionString, query);
+            var queryTask = Query.getRows(connectionString, query);
             queryTask.Wait();
             var jsonResult = new List<string>();
             queryTask.Result.ForEach(row => jsonResult.Add(new JavaScriptSerializer().Serialize(row)));
